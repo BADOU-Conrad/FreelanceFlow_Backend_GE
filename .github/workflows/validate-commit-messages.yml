@@ -1,0 +1,33 @@
+name: Validate Commit Messages
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  validate-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages contain issue numbers
+        run: |
+          # Récupère tous les commits de la PR
+          commits=$(git log origin/main..HEAD --format=%B)
+          
+          # Vérifie que chaque message contient #numéro
+          if ! echo "$commits" | grep -qE '#[0-9]+'; then
+            echo "❌ Erreur : Les messages de commit doivent contenir un numéro d'issue (#123)"
+            echo ""
+            echo "Commits trouvés :"
+            git log origin/main..HEAD --oneline
+            echo ""
+            echo "Format requis : 'feat: description (#123)' ou 'fix: description closes #456'"
+            exit 1
+          fi
+          
+          echo "✅ Tous les commits contiennent des numéros d'issues"
+          git log origin/main..HEAD --oneline
